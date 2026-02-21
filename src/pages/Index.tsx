@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
-import { Shield, Search } from "lucide-react";
+import { Shield, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { ContentSubmitForm } from "@/components/ContentSubmitForm";
 import { RecentSubmissions } from "@/components/RecentSubmissions";
 import { RiskDistributionChart } from "@/components/RiskDistributionChart";
@@ -13,6 +15,7 @@ const Index = () => {
   const [submissions, setSubmissions] = useState<AnalysisResult[]>(() => generateSampleData());
   const [selectedResult, setSelectedResult] = useState<AnalysisResult | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { signOut } = useAuth();
 
   const filtered = useMemo(() => {
     if (!searchQuery) return submissions;
@@ -79,6 +82,9 @@ const Index = () => {
                 className="w-64 bg-secondary border-border pl-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50"
               />
             </div>
+            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>
