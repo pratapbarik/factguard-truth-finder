@@ -3,7 +3,9 @@ import { Shield, Upload, Link, FileText, Image, Video, Loader2 } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { analyzeContent, type ContentType, type AnalysisResult } from "@/lib/mockAnalysis";
+import { type ContentType, type AnalysisResult } from "@/lib/mockAnalysis";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ContentSubmitFormProps {
   onAnalysisComplete: (result: AnalysisResult) => void;
@@ -21,18 +23,32 @@ export function ContentSubmitForm({ onAnalysisComplete }: ContentSubmitFormProps
   const [sourceUrl, setSourceUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileName, setFileName] = useState("");
+  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (!content && !fileName) return;
     setIsAnalyzing(true);
-    // Simulate AI processing delay
-    await new Promise(r => setTimeout(r, 1500 + Math.random() * 1500));
-    const result = analyzeContent(contentType, content || fileName, sourceUrl || undefined);
-    setIsAnalyzing(false);
-    onAnalysisComplete(result);
-    setContent("");
-    setSourceUrl("");
-    setFileName("");
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-content", {
+        body: { contentType, content: content || fileName, sourceUrl: sourceUrl || undefined },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      onAnalysisComplete(data as AnalysisResult);
+      setContent("");
+      setSourceUrl("");
+      setFileName("");
+    } catch (e: any) {
+      toast({
+        title: "Analysis failed",
+        description: e.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
